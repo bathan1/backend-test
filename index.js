@@ -1,6 +1,8 @@
+require('dotenv').config();
 const express = require("express");
 const morgan = require("morgan");
 const cors = require('cors');
+const Person = require('./models/person.js');
 
 const app = express();
 app.use(express.json());
@@ -12,44 +14,17 @@ morgan.token("json-body", (req, res) => {
 });
 app.use(morgan(":method :url :status :res[content-length] - :response-time ms :json-body"));
 
-let data = 
-[
-    { 
-      "id": 1,
-      "name": "Arto Hellas", 
-      "number": "040-123456"
-    },
-    { 
-      "id": 2,
-      "name": "Ada Lovelace", 
-      "number": "39-44-5323523"
-    },
-    { 
-      "id": 3,
-      "name": "Dan Abramov", 
-      "number": "12-43-234345"
-    },
-    { 
-      "id": 4,
-      "name": "Mary Poppendieck", 
-      "number": "39-23-6423122"
-    }
-]
-
 app.get("/api/persons", (request, response) => {
-    response.json(data);
-})
+    Person.find({}).then(persons => {
+        response.json(persons);
+    });
+});
 
 app.get("/api/persons/:id", (request, response) => {
-    const id = Number(request.params.id);
-    const person = data.find(p => p.id === id);
-    
-    if (person) {
-        response.json(person);
-    } else {
-        response.status(404).end();
-    }
-})
+    Person.findById(request.params.id).then(note => {
+        response.json(note);
+    });
+});
 
 app.get("/info", (request, response) => {
     const currentTime = new Date();
@@ -65,33 +40,24 @@ app.delete("/api/persons/:id", (request, response) => {
 })
 
 app.post("/api/persons", (request, response) => {
-    const id = Math.floor(Math.random() * 999);
-    console.log(request.body);
     const body = request.body;
 
-    if (!body.name || !body.number) {
-        return response.status(400).json({
-            error: "content missing"
-        });
-    } else if (data.some(person => person.name === body.name)) {
-        return response.status(400).json({
-            error: "name must be unique"
-        });
+    if (body.name === undefined || body.number === undefined) {
+        return response.status(400).json({error: 'content missing'});
     }
 
-    const person = {
-        id: id,
+    const person = new Person({
         name: body.name,
         number: body.number,
-        
-    }
+    });
 
-    data = data.concat(person);
+    person.save().then(savedPerson => {
+        response.json(savedPerson);
+    })
 
-    response.json(data);
 })
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
