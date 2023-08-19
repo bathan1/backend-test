@@ -1,4 +1,4 @@
-DELETE http://localhost:3001/api/persons/1
+DELETE https://test-4l2j.onrender.com/api/persons/1
 
 ###
-GET http://localhost:3001/api/persons
+GET https://test-4l2j.onrender.com/api/persons
